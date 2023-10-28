@@ -163,6 +163,7 @@ def model_to_mesh(model: Model, scene: Scene, materials_map : Dict[str, bpy.type
 
 
     if model.geometry:
+        geometry_has_colors = any(segment.colors for segment in model.geometry)
 
         for segment in model.geometry:
 
@@ -183,7 +184,7 @@ def model_to_mesh(model: Model, scene: Scene, materials_map : Dict[str, bpy.type
 
             if segment.colors:
                 vertex_colors.extend(segment.colors)
-            else:
+            elif geometry_has_colors:
                 [vertex_colors.extend([0.0, 0.0, 0.0, 1.0]) for _ in range(len(segment.positions))]
             
             if segment.weights:
@@ -239,8 +240,9 @@ def model_to_mesh(model: Model, scene: Scene, materials_map : Dict[str, bpy.type
         blender_mesh.uv_layers[0].data.foreach_set("uv", [component for i in flat_indices for component in vertex_uvs[i]])
 
         # Colors
-        blender_mesh.color_attributes.new("COLOR0", "FLOAT_COLOR", "POINT")
-        blender_mesh.color_attributes[0].data.foreach_set("color", vertex_colors)
+        if geometry_has_colors:
+            blender_mesh.color_attributes.new("COLOR0", "FLOAT_COLOR", "POINT")
+            blender_mesh.color_attributes[0].data.foreach_set("color", vertex_colors)
 
 
         # POLYGONS/FACES
